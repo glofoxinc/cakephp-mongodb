@@ -1,10 +1,7 @@
 # mongoDB datasource for CakePHP (Abandon Project)
 
-[![Build Status](https://travis-ci.org/ichikaway/cakephp-mongodb.png?branch=cake2.2)](https://travis-ci.org/ichikaway/cakephp-mongodb)
-[![Coverage Status](https://coveralls.io/repos/ichikaway/cakephp-mongodb/badge.png?branch=cake2.2)](https://coveralls.io/r/ichikaway/cakephp-mongodb)
-
-## IMPORTANT
-Sorry. This project is no longer maintained!
+[![Build Status](https://travis-ci.org/gianksp/cakephp-mongodb.png?branch=cake2.2)](https://travis-ci.org/gianksp/cakephp-mongodb)
+[![Coverage Status](https://coveralls.io/repos/gianksp/cakephp-mongodb/badge.png?branch=cake2.2)](https://coveralls.io/r/gianksp/cakephp-mongodb)
 
 ## Requirements
 
