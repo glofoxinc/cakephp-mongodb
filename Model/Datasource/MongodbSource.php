@@ -182,6 +182,7 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function connect() {
+
 		$this->connected = false;
 
 		try{
@@ -306,17 +307,19 @@ class MongodbSource extends DboSource {
 
 		foreach ($values as $key => $value) {
 			foreach ($value as $k => $v) {
-				switch($Model->mongoSchema[$fields[$k]]['type']) {
-					case 'datetime':
-					case 'timestamp':
-					case 'date':
-					case 'time':
-						if (is_string($values[$key][$k])) {
-							$values[$key][$k] = new MongoDate(strtotime($v));
-						}
-						break;
-					default:
-						break;
+				if (isset($k) && isset($fields[$k]) && isset($Model->mongoSchema[$fields[$k]]) && isset($Model->mongoSchema[$fields[$k]]['type'])) {
+					switch($Model->mongoSchema[$fields[$k]]['type']) {
+						case 'datetime':
+						case 'timestamp':
+						case 'date':
+						case 'time':
+							if (is_string($values[$key][$k])) {
+								$values[$key][$k] = new MongoDate(strtotime($v));
+							}
+							break;
+						default:
+							break;
+					}
 				}
 			}
 		}
@@ -607,7 +610,7 @@ class MongodbSource extends DboSource {
 		$return = "toDrop = :tables;\nfor( i = 0; i < toDrop.length; i++ ) {\n\tdb[toDrop[i]].drop();\n}";
 		$tables = '["' . implode($toDrop, '", "') . '"]';
 
-		return String::insert($return, compact('tables'));
+		return CakeText::insert($return, compact('tables'));
 	}
 
 /**
@@ -668,7 +671,7 @@ class MongodbSource extends DboSource {
  * @return void
  * @access public
  */
-	public function group($params, Model $Model = null) {
+	public function group($params,  Model $Model = null) {
 
 		if (!$this->isConnected() || count($params) === 0 || $Model === null) {
 			return false;
@@ -1316,7 +1319,7 @@ class MongodbSource extends DboSource {
  * @return mixed Prepared value or array of values.
  * @access public
  */
-	public function value($data, $column = null) {
+	public function value($data, $column = null, $null = true) {
 		if (is_array($data) && !empty($data)) {
 			return array_map(
 				array(&$this, 'value'),
@@ -1379,6 +1382,7 @@ class MongodbSource extends DboSource {
 		if (!$query || $query === true) {
 			return;
 		}
+
 		$this->_prepareLogQuery($Model); // just sets a timer
 		$return = $this->_db
 			->execute($query, $params);
@@ -1473,7 +1477,7 @@ class MongodbSource extends DboSource {
 	public function logQuery($query, $args = array()) {
 		if ($args) {
 			$this->_stringify($args);
-			$query = String::insert($query, $args);
+			$query = CakeText::insert($query, $args);
 		}
 		$this->took = round((microtime(true) - $this->_startTime) * 1000, 0);
 		$this->affected = null;
