@@ -3,7 +3,7 @@
     "description": "MongoDB Datasource for CakePHP",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "mongo", "datasource"],
-    "homepage": "https://github.com/ichikaway/cakephp-mongodb",
+    "homepage": "https://github.com/gianksp/cakephp-mongodb",
     "license": "MIT",
     "authors": [
         {
@@ -12,33 +12,8 @@
             "role": "Author"
         },
         {
-            "name": "Yasushi Ichikawa",
-            "homepage": "http://twitter.com/ichikaway",
-            "role": "Author"
-        },
-        {
-            "name": "Andy Dawson",
-            "homepage": "http://twitter.com/AD7six",
-            "role": "Author"
-        },
-        {
-            "name": "predominant",
-            "homepage": "http://github.com/predominant/",
-            "role": "Contributor"
-        },
-        {
-            "name": "jrbasso",
-            "homepage": "http://github.com/jrbasso/",
-            "role": "Contributor"
-        },
-        {
-            "name": "tkyk",
-            "homepage": "http://github.com/tkyk/",
-            "role": "Contributor"
-        },
-        {
             "name": "Various Others",
-            "homepage": "https://github.com/ichikaway/cakephp-mongodb/graphs/contributors"
+            "homepage": "https://github.com/gianksp/cakephp-mongodb/graphs/contributors"
         }
     ],
     "support": {
