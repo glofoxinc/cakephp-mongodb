@@ -56,6 +56,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  */
 	protected $_defaultSettings = array(
 		'convertDates' => true,
+		'dateFormat' => 'Y-M-d H:i:s',
 		'operators' => array(
 			'!=' => '$ne',
 			'>' => '$gt',
@@ -78,7 +79,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function setup(&$Model, $config = array()) {
+	public function setup(Model $Model, $config = array()) {
 		$this->settings[$Model->alias] = array_merge($this->_defaultSettings, $config);
 	}
 
@@ -91,9 +92,9 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function afterFind(&$Model, $results, $primary) {
+	public function afterFind(Model $Model, $results, $primary = false) {
 		if ($this->settings[$Model->alias]['convertDates']) {
-			$this->convertDates($results);
+			$this->convertDates($this->settings[$Model->alias]['dateFormat'], $results);
 		}
 		return $results;
 	}
@@ -108,7 +109,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access public
  */
-	public function beforeFind(&$Model, $query) {
+	public function beforeFind(Model $Model, $query) {
 		if (is_array($query['order'])) {
 			$this->_translateOrders($Model, $query['order']);
 		}
@@ -121,17 +122,18 @@ class SqlCompatibleBehavior extends ModelBehavior {
 /**
  * Convert MongoDate objects to strings for the purpose of view simplicity
  *
- * @param mixed $results
+ * @param string $format
+ * @param mixed  $results
  * @return void
- * @access public
+ * @access protected
  */
-	public function convertDates(&$results) {
+	protected function convertDates($format, &$results) {
 		if (is_array($results)) {
 			foreach($results as &$row) {
-				$this->convertDates($row);
+				$this->convertDates($format, $row);
 			}
 		} elseif (is_a($results, 'MongoDate')) {
-			$results = date('Y-M-d h:i:s', $results->sec);
+			$results = date($format, $results->sec);
 		}
 	}
 
@@ -145,7 +147,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access protected
  */
-	protected function _translateOrders(&$Model, &$orders) {
+	protected function _translateOrders(Model &$Model, &$orders) {
 		if(!empty($orders[0])) {
 			foreach($orders[0] as $key => $val) {
 				if(preg_match('/^(.+) (ASC|DESC)$/i', $val, $match)) {
@@ -167,13 +169,15 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return void
  * @access protected
  */
-	protected function _translateConditions(&$Model, &$conditions) {
+	protected function _translateConditions(Model &$Model, &$conditions) {
 		$return = false;
 		foreach($conditions as $key => &$value) {
 			$uKey = strtoupper($key);
-			if (substr($uKey, -5) === 'NOT IN') {
+			if (substr($uKey, -6) === 'NOT IN') {
 				// 'Special' case because it has a space in it, and it's the whole key
-				$conditions[substr($key, 0, -5)]['$nin'] = $value;
+				$field = trim(substr($key, 0, -6));
+
+				$conditions[$field]['$nin'] = $value;
 				unset($conditions[$key]);
 				$return = true;
 				continue;
@@ -204,6 +208,12 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				}
 				$return = true;
 				continue;
+			}
+			if (is_numeric($key) && is_array($value)) {
+				if ($this->_translateConditions($Model, $value)) {
+					$return = true;
+					continue;
+				}
 			}
 			if (substr($uKey, -3) === 'NOT') {
 				// 'Special' case because it's awkward
@@ -247,16 +257,9 @@ class SqlCompatibleBehavior extends ModelBehavior {
 				$return = true;
 				continue;
 			}
-
 			if (!in_array(substr($key, -1), array('>', '<', '='))) {
 				$return = true;
 				continue;
-			}
-			if (is_numeric($key && is_array($value))) {
-				if ($this->_translateConditions($Model, $value)) {
-					$return = true;
-					continue;
-				}
 			}
 			$parts = explode(' ', $key);
 			$operator = array_pop($parts);
@@ -286,7 +289,7 @@ class SqlCompatibleBehavior extends ModelBehavior {
  * @return string
  * @access protected
  */
-	protected function _translateOperator($Model, $operator) {
+	protected function _translateOperator(Model $Model, $operator) {
 		if (!empty($this->settings[$Model->alias]['operators'][$operator])) {
 			return $this->settings[$Model->alias]['operators'][$operator];
 		}
