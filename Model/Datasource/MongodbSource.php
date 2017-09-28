@@ -532,7 +532,7 @@ class MongodbSource extends DboSource {
 			if ($this->_driverVersion >= '1.3.0') {
 				$return = $this->_db
 					->selectCollection($table)
-					->insert($data, array('safe' => true));
+					->insert($data, array('w' => true));
 			} else {
 				$return = $this->_db
 					->selectCollection($table)
@@ -797,7 +797,7 @@ class MongodbSource extends DboSource {
 
 			try{
 				if ($this->_driverVersion >= '1.3.0') {
-					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'safe' => true));
+					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false, 'w' => true));
 				} else {
 					$return = $mongoCollectionObj->update($cond, $data, array("multiple" => false));
 				}
@@ -813,7 +813,7 @@ class MongodbSource extends DboSource {
 		} else {
 			try{
 				if ($this->_driverVersion >= '1.3.0') {
-					$return = $mongoCollectionObj->save($data, array('safe' => true));
+					$return = $mongoCollectionObj->save($data, array('w' => true));
 				} else {
 					$return = $mongoCollectionObj->save($data);
 				}
@@ -898,7 +898,7 @@ class MongodbSource extends DboSource {
 				// not use 'upsert'
 				$return = $this->_db
 					->selectCollection($table)
-					->update($conditions, $fields, array("multiple" => true, 'safe' => true));
+					->update($conditions, $fields, array("multiple" => true, 'w' => true));
 				if (isset($return['updatedExisting'])) {
 					$return = $return['updatedExisting'];
 				}
