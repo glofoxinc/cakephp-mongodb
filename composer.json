@@ -1,24 +1,24 @@
 {
-    "name": "gianksp/cakephp-mongodb",
+    "name": "alexrom7/cakephp-mongodb",
     "description": "MongoDB Datasource for CakePHP",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "mongo", "datasource"],
-    "homepage": "https://github.com/gianksp/cakephp-mongodb",
+    "homepage": "https://github.com/alexrom7/cakephp-mongodb",
     "license": "MIT",
     "authors": [
         {
-            "name": "Giancarlo Sanchez",
-            "homepage": "http://twitter.com/gianksp",
+            "name": "Alexis Romero",
+            "homepage": "https://github.com/alexrom7",
             "role": "Author"
         },
         {
             "name": "Various Others",
-            "homepage": "https://github.com/gianksp/cakephp-mongodb/graphs/contributors"
+            "homepage": "https://github.com/alexrom7/cakephp-mongodb/graphs/contributors"
         }
     ],
     "support": {
-        "issues": "https://github.com/gianksp/cakephp-mongodb/issues",
-        "source": "https://github.com/gianksp/cakephp-mongodb"
+        "issues": "https://github.com/alexrom7/cakephp-mongodb/issues",
+        "source": "https://github.com/alexrom7/cakephp-mongodb"
     },
     "require": {
         "php": ">=5.3.0",
