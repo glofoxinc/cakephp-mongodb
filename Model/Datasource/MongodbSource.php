@@ -212,6 +212,13 @@ class MongodbSource extends DboSource {
 				}
 			}
 
+			if (isset($this->config['read_preference']) && !empty($this->config['read_preference'])) {
+                $this->connection->setReadPreference($this->config['read_preference']);
+            }
+            else {
+                $this->connection->setReadPreference($class::RP_NEAREST);
+            }
+
 			if ($this->_db = $this->connection->selectDB($this->config['database'])) {
 				if (!empty($this->config['login']) && $this->_driverVersion < '1.2.0') {
 					$return = $this->_db->authenticate($this->config['login'], $this->config['password']);
