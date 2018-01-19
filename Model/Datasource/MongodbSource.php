@@ -1046,6 +1046,9 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	public function read(Model $Model, $query = array(), $recursive = null) {
+        // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c
+        $isAggregateQuery = false;
+
 		if (!$this->isConnected()) {
 			return false;
 		}
@@ -1098,12 +1101,28 @@ class MongodbSource extends DboSource {
 			$offset = ($page - 1) * $limit;
 		}
 
+		// Set flag if the query is an aggregate query.
+        // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c
+		if (count($conditions) == 1 && array_key_exists('aggregate', $conditions)) {
+			$isAggregateQuery = true;
+		}
+
 		$return = array();
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
+
+                // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c
+				if ($isAggregateQuery) {
+					$count = $this->getResultCountForAggregateQuery($Model, $conditions);
+				} else {
+					$count = $this->_db
+						->selectCollection($Model->table)
+						->count($conditions);
+				}
+
 				$cursor = $this->_db
 					->selectCollection($table)
 					->find($conditions, array('_id' => true));
@@ -1122,25 +1141,80 @@ class MongodbSource extends DboSource {
 				return array(array($Model->alias => array('count' => $count)));
 			}
 
-			$return = $this->_db
-				->selectCollection($table)
-				->find($conditions, $fields)
-				->sort($order)
-				->limit($limit)
-				->skip($offset);
+            // https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c#diff-5353ae971009a3cc0a3e7385c8c44242R1128
+			if ($isAggregateQuery) {
+
+				// We are dealing with aggregate query here.
+				if (!empty($order)) {
+					$conditions['aggregate'][] = array('$sort' => $order);
+				}
+
+				if (!empty($offset)) {
+					$conditions['aggregate'][] = array('$skip' => $offset);
+				}
+
+				if (!empty($limit)) {
+					$conditions['aggregate'][] = array('$limit' => $limit);
+				}
+
+                // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/9399c127493ea71813c9709a570b9af3104e972e
+                // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/ce8a70a6e901e340b461881bf6c9ea95025cba23
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->aggregate($conditions['aggregate'], ['allowDiskUse' => true, 'cursor' => true]);
+
+				// Format $return in a format that cake expects
+				$_return = [];
+				foreach($return['result'] as $result)
+				{
+					$_return[][$Model->alias] = $result;
+				}
+
+				$return = $_return;
+
+			} else {
+
+			    // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/1ea394e6af9350dff46135ebc01c7a2cb602651d
+                // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/06f195706b6312b887ec2b4dca376fb9ac891db8
+				if (!empty($fields) && !is_numeric(current($fields))) {
+		            $fields = array_combine($fields, array_fill(0, count($fields), 1));
+				}
+
+				$return = $this->_db
+					->selectCollection($Model->table)
+					->find($conditions, $fields)
+					->sort($order)
+					->limit($limit)
+					->skip($offset);
+			}
+
 			if (!empty($hint)) {
 				$return->hint($hint);
 			}
-			if ($this->fullDebug) {
-				$count = $return->count(true);
-				if (empty($hint)) {
-					$hint = array();
-				}
-				$this->logQuery("db.{$table}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
-					compact('conditions', 'fields', 'order', 'limit', 'offset', 'count', 'hint')
-				);
-			}
+
+			// https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c#diff-5353ae971009a3cc0a3e7385c8c44242R1162
+            if ($this->fullDebug) {
+                if ($isAggregateQuery)
+                {
+                    $count = $this->getResultCountForAggregateQuery($Model,$conditions);
+                }
+                else
+                {
+                    $count = $return->count(true);
+                }
+                $this->logQuery("db.{$Model->useTable}.find( :conditions, :fields ).sort( :order ).limit( :limit ).skip( :offset ).hint( :hint )",
+                    compact('conditions', 'fields', 'order', 'limit', 'offset', 'count', 'hint')
+                );
+            }
+
 		} else {
+
+		    // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/1ea394e6af9350dff46135ebc01c7a2cb602651d
+            // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/06f195706b6312b887ec2b4dca376fb9ac891db8
+			if (!empty($fields) && !is_numeric(current($fields))) {
+				$fields = array_combine($fields, array_fill(0, count($fields), 1));
+			}
+
 			$options = array_filter(array(
 				'findandmodify' => $table,
 				'query' => $conditions,
@@ -1148,7 +1222,7 @@ class MongodbSource extends DboSource {
 				'remove' => !empty($remove),
 				'update' => $this->setMongoUpdateOperator($Model, $modify),
 				'new' => !empty($new),
-				'fields' => $fields,
+                'fields' => $fields,
 				'upsert' => !empty($upsert)
 			));
 			$return = $this->_db
@@ -1169,14 +1243,30 @@ class MongodbSource extends DboSource {
 			}
 		}
 
-		if ($Model->findQueryType === 'count') {
-			return array(array($Model->alias => array('count' => $return->count())));
-		}
+        if ($Model->findQueryType === 'count') {
+
+            // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c
+            if ($isAggregateQuery) {
+
+                $count = $this->getResultCountForAggregateQuery($Model,$conditions);
+
+            } else {
+
+                $count = $return->count();
+            }
+
+            return array(array($Model->alias => array('count' => $count)));
+        }
 
 		if (is_object($return)) {
 			$_return = array();
 			while ($return->hasNext()) {
 				$mongodata = $return->getNext();
+
+				// @see https://github.com/ExpandOnline/cakephp-mongodb/commit/41228aa75491ae8bb4a0d75470d2dc47108a5aa4
+				if (is_null($mongodata)) {
+					continue;
+                }
 				if ($this->config['set_string_id'] && !empty($mongodata['_id']) && is_object($mongodata['_id'])) {
 					$mongodata['_id'] = $mongodata['_id']->__toString();
 				}
@@ -1191,6 +1281,34 @@ class MongodbSource extends DboSource {
 		}
 		return $return;
 	}
+
+    /**
+     * @param $Model
+     * @param $conditions
+     * @return int
+     */
+    // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c
+    protected function getResultCountForAggregateQuery(&$Model, $conditions)
+    {
+        $countConditions = $conditions['aggregate'];
+        $countConditions[] = array(
+            '$group' => array(
+                '_id' => null,
+                'count' => array('$sum' => 1)
+            ));
+
+        // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/ce8a70a6e901e340b461881bf6c9ea95025cba23
+        $countOfAggregatedResults = $this->_db
+            ->selectCollection($Model->table)
+            ->aggregate($countConditions, ['allowDiskUse' => true, 'cursor' => true]);
+        if (!empty($countOfAggregatedResults['result'])) {
+            $countOfAggregatedResults = $countOfAggregatedResults['result'][0]['count'];
+        } else {
+            $countOfAggregatedResults = 0;
+        }
+        $count = $countOfAggregatedResults;
+        return $count;
+    }
 
 /**
  * rollback method
@@ -1326,6 +1444,7 @@ class MongodbSource extends DboSource {
  * @return mixed Prepared value or array of values.
  * @access public
  */
+// @see https://github.com/ExpandOnline/cakephp-mongodb/commit/538094ff2a62ee97f64af4718c5b398ec6baff34
 	public function value($data, $column = null, $null = true) {
 		if (is_array($data) && !empty($data)) {
 			return array_map(
