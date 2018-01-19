@@ -1,5 +1,5 @@
 {
-    "name": "alexrom7/cakephp-mongodb",
+    "name": "glofox/cakephp-mongodb",
     "description": "MongoDB Datasource for CakePHP",
     "type": "cakephp-plugin",
     "keywords": ["cakephp", "mongo", "datasource"],
@@ -7,8 +7,18 @@
     "license": "MIT",
     "authors": [
         {
+            "name": "Glofox Team",
+            "homepage": "https://www.glofox.com",
+            "role": "Author"
+        },
+        {
             "name": "Alexis Romero",
             "homepage": "https://github.com/alexrom7",
+            "role": "Author"
+        },
+        {
+            "name": "Giancarlo Sanchez",
+            "homepage": "https://github.com/gianksp",
             "role": "Author"
         },
         {
