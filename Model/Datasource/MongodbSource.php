@@ -1063,10 +1063,11 @@ class MongodbSource extends DboSource {
 		$this->_stripAlias($fields, $Model->alias, false, 'value');
 		$this->_stripAlias($order, $Model->alias, false, 'both');
 
-		if(!empty($conditions['id']) && empty($conditions['_id'])) {
-			$conditions['_id'] = $conditions['id'];
-			unset($conditions['id']);
-		}
+		// DISCUSSED WITH THE TEAM. NEEDS TO BE REMOVED
+//		if(!empty($conditions['id']) && empty($conditions['_id'])) {
+//			$conditions['_id'] = $conditions['id'];
+//			unset($conditions['id']);
+//		}
 
 		if (!empty($conditions['_id'])) {
 			$this->_convertId($conditions['_id']);
