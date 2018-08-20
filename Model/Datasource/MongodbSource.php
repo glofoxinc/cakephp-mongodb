@@ -370,9 +370,9 @@ class MongodbSource extends DboSource {
 		if ($this->connected === false) {
 			return false;
 		}
-        
+
         $table = $this->fullTableName($Model);
-        
+
 		$collection = $this->_db
 			->selectCollection($table);
 		return $collection;
@@ -454,7 +454,7 @@ class MongodbSource extends DboSource {
 
 		$schema = array();
         $table = $this->fullTableName($Model);
-        
+
 		if (!empty($Model->mongoSchema) && is_array($Model->mongoSchema)) {
 			$schema = $Model->mongoSchema;
 			return $schema + array($Model->primaryKey => $this->_defaultSchema['_id']);
@@ -639,9 +639,9 @@ class MongodbSource extends DboSource {
 		if (array_key_exists('conditions', $params)) {
 			$params = $params['conditions'];
 		}
-        
+
         $table = $this->fullTableName($Model);
-        
+
 		try{
 			$return = $this->_db
 				->selectCollection($table)
@@ -691,7 +691,7 @@ class MongodbSource extends DboSource {
 		$reduce = (empty($params['reduce'])) ? array() : $params['reduce'];
 		$options = (empty($params['options'])) ? array() : $params['options'];
         $table = $this->fullTableName($Model);
-        
+
 		try{
 			$return = $this->_db
 				->selectCollection($table)
@@ -724,7 +724,7 @@ class MongodbSource extends DboSource {
 
 		$this->_prepareLogQuery($Model); // just sets a timer
         $table = $this->fullTableName($Model);
-        
+
 		try{
 			$return = $this->_db
 				->selectCollection($table)
@@ -784,7 +784,7 @@ class MongodbSource extends DboSource {
 
 		$this->_convertId($data['_id']);
         $table = $this->fullTableName($Model);
-        
+
 		try{
 			$mongoCollectionObj = $this->_db
 				->selectCollection($table);
@@ -1002,9 +1002,9 @@ class MongodbSource extends DboSource {
 			$id = $conditions['id'];
 			unset($conditions['id']);
 		}
-        
+
         $table = $this->fullTableName($Model);
-        
+
 		$mongoCollectionObj = $this->_db
 			->selectCollection($table);
 
@@ -1094,14 +1094,17 @@ class MongodbSource extends DboSource {
 					unset ($order[$field]);
 					continue;
 				}
-				if ($dir && strtoupper($dir) === 'ASC') {
-					$dir = 1;
-					continue;
-				} elseif (!$dir || strtoupper($dir) === 'DESC') {
-					$dir = -1;
-					continue;
-				}
-				$dir = (int)$dir;
+
+				if (!is_array($dir)) {
+                    if ($dir && strtoupper($dir) === 'ASC') {
+                        $dir = 1;
+                        continue;
+                    } elseif (!$dir || strtoupper($dir) === 'DESC') {
+                        $dir = -1;
+                        continue;
+                    }
+                    $dir = (int)$dir;
+                }
 			}
 		}
 
@@ -1184,9 +1187,20 @@ class MongodbSource extends DboSource {
 
 			    // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/1ea394e6af9350dff46135ebc01c7a2cb602651d
                 // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/06f195706b6312b887ec2b4dca376fb9ac891db8
-				if (!empty($fields) && !is_numeric(current($fields))) {
-		            $fields = array_combine($fields, array_fill(0, count($fields), 1));
-				}
+                if (!empty($fields) && !is_numeric(current($fields))) {
+                    $fill = [];
+
+                    foreach ($fields as $key => $field) {
+                        if (is_array($field)) {
+                            $fill[$key] = $field;
+                            continue;
+                        }
+
+                        $fill[$field] = 1;
+                    }
+
+                    $fields = $fill;
+                }
 
 				$return = $this->_db
 					->selectCollection($Model->table)
@@ -1219,9 +1233,20 @@ class MongodbSource extends DboSource {
 
 		    // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/1ea394e6af9350dff46135ebc01c7a2cb602651d
             // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/06f195706b6312b887ec2b4dca376fb9ac891db8
-			if (!empty($fields) && !is_numeric(current($fields))) {
-				$fields = array_combine($fields, array_fill(0, count($fields), 1));
-			}
+            if (!empty($fields) && !is_numeric(current($fields))) {
+                $fill = [];
+
+                foreach ($fields as $key => $field) {
+                    if (is_array($field)) {
+                        $fill[$key] = $field;
+                        continue;
+                    }
+
+                    $fill[$field] = 1;
+                }
+
+                $fields = $fill;
+            }
 
 			$options = array_filter(array(
 				'findandmodify' => $table,
