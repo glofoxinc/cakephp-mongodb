@@ -101,7 +101,7 @@ class MongodbSource extends DboSource {
 		'port'       => '27017',
 		'login'		=> '',
 		'password'	=> '',
-		'replicaset'	=> '',
+		'replicaset'	=> [],
 	);
 
 /**
