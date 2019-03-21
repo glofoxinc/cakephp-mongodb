@@ -133,6 +133,11 @@ class MongodbSource extends DboSource {
 		'modified' => array('type' => 'datetime', 'default' => null)
 	);
 
+	/**
+	 * @var \MongoDB\Driver\ReadConcern
+	 */
+	protected $readConcern;
+
 /**
  * construct method
  *
@@ -144,7 +149,9 @@ class MongodbSource extends DboSource {
  * @access public
  */
 	function __construct($config = array(), $autoConnect = false) {
-		return parent::__construct($config, $autoConnect);
+		parent::__construct($config, $autoConnect);
+
+		$this->readConcern = new \MongoDB\Driver\ReadConcern(\MongoDB\Driver\ReadConcern::MAJORITY);
 	}
 
 /**
@@ -1205,6 +1212,7 @@ class MongodbSource extends DboSource {
 				$return = $this->_db
 					->selectCollection($Model->table)
 					->find($conditions, $fields)
+					->addOption('readConcern', $this->readConcern)
 					->sort($order)
 					->limit($limit)
 					->skip($offset);
@@ -1618,6 +1626,11 @@ class MongodbSource extends DboSource {
 		MongoCursor::$timeout = $ms;
 
 		return true;
+	}
+
+	public function setReadConcern(\MongoDB\Driver\ReadConcern $readConcern)
+	{
+		$this->readConcern = $readConcern;
 	}
 
 /**
