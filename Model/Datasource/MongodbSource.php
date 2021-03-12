@@ -1684,14 +1684,16 @@ class MongodbSource extends DboSource {
             if (!empty($mixed[0]) && $conditions) {
                 $mixed = array('$in' => $mixed);
             }
+            return;
         }
         if ($mixed instanceof MongoId) {
             return;
         }
-        if (preg_match('/^[0-9a-fA-F]{24}$/', $mixed) !== 1) {
+        $id = (string) $mixed;
+        if (preg_match('/^[0-9a-fA-F]{24}$/', $id) !== 1) {
             return;
         }
-        $mixed = new MongoId($mixed);
+        $mixed = new MongoId($id);
 	}
 
 /**
