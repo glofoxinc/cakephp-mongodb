@@ -1677,14 +1677,14 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected function _convertId(&$mixed, $conditions = false) {
-		if (is_array($mixed)) {
-			foreach($mixed as &$row) {
-				$this->_convertId($row, false);
-			}
-			if (!empty($mixed[0]) && $conditions) {
-				$mixed = array('$in' => $mixed);
-			}
-		}
+        if (is_array($mixed)) {
+            foreach ($mixed as &$row) {
+                $this->_convertId($row, false);
+            }
+            if (!empty($mixed[0]) && $conditions) {
+                $mixed = array('$in' => $mixed);
+            }
+        }
         if ($mixed instanceof MongoId) {
             return;
         }
