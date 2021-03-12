@@ -1677,23 +1677,21 @@ class MongodbSource extends DboSource {
  * @access protected
  */
 	protected function _convertId(&$mixed, $conditions = false) {
-		if (is_int($mixed) || ctype_digit($mixed)) {
-			return;
-		}
-		if (is_string($mixed)) {
-			if (strlen($mixed) !== 24) {
-				return;
-			}
-			$mixed = new MongoId($mixed);
-		}
-		if (is_array($mixed)) {
-			foreach($mixed as &$row) {
-				$this->_convertId($row, false);
-			}
-			if (!empty($mixed[0]) && $conditions) {
-				$mixed = array('$in' => $mixed);
-			}
-		}
+        if (is_array($mixed)) {
+            foreach ($mixed as &$row) {
+                $this->_convertId($row, false);
+            }
+            if (!empty($mixed[0]) && $conditions) {
+                $mixed = array('$in' => $mixed);
+            }
+        }
+        if ($mixed instanceof MongoId) {
+            return;
+        }
+        if (preg_match('/^[0-9a-fA-F]{24}$/', $mixed) !== 1) {
+            return;
+        }
+        $mixed = new MongoId($mixed);
 	}
 
 /**
