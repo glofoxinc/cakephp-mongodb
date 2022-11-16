@@ -1147,6 +1147,9 @@ class MongodbSource extends DboSource {
 				if (!empty($hint)) {
 					$cursor->hint($hint);
 				}
+                if (!empty($maxTimeMS)) {
+                    $cursor->maxTimeMS($maxTimeMS);
+                }
 				$count = $cursor->count();
 				if ($this->fullDebug) {
 					if (empty($hint)) {
@@ -1221,6 +1224,9 @@ class MongodbSource extends DboSource {
 			if (!empty($hint)) {
 				$return->hint($hint);
 			}
+            if (!empty($maxTimeMS)) {
+                $return->maxTimeMS($maxTimeMS);
+            }
 
 			// https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c#diff-5353ae971009a3cc0a3e7385c8c44242R1162
             if ($this->fullDebug) {
