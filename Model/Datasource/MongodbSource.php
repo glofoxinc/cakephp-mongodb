@@ -1131,16 +1131,6 @@ class MongodbSource extends DboSource {
         $table = $this->fullTableName($Model);
 		if (empty($modify)) {
 			if ($Model->findQueryType === 'count' && $fields == array('count' => true)) {
-
-                // @see https://github.com/ExpandOnline/cakephp-mongodb/commit/f7d50f8dea5d8a3b8b6da99e5de62256e7283e3c
-				if ($isAggregateQuery) {
-					$count = $this->getResultCountForAggregateQuery($Model, $conditions);
-				} else {
-					$count = $this->_db
-						->selectCollection($Model->table)
-						->count($conditions);
-				}
-
 				$cursor = $this->_db
 					->selectCollection($table)
 					->find($conditions, array('_id' => true));
